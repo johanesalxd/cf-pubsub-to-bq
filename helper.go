@@ -1,13 +1,13 @@
-package main
+package subscribepubsub
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"sync"
 
 	"cloud.google.com/go/bigquery"
-	"cloud.google.com/go/pubsub"
 )
 
 type BigQueryRow struct {
@@ -16,11 +16,45 @@ type BigQueryRow struct {
 	Name string `bigquery:"name"`
 }
 
-// processMessage unmarshals a Pub/Sub message and inserts it into BigQuery
+var (
+	bqInserter *bigquery.Inserter
+	initOnce   sync.Once
+	initError  error
+)
+
+// initializeBigQuery initializes the BigQuery client and inserter.
+// It loads the configuration, creates a BigQuery client, and sets up the inserter.
+// This function is called once using sync.Once to ensure single initialization.
+func initializeBigQuery() {
+	ctx := context.Background()
+
+	// Load configuration
+	config, err := loadConfig()
+	if err != nil {
+		initError = fmt.Errorf("failed to load config: %v", err)
+		return
+	}
+
+	// Initialize BigQuery client
+	bqClient, err := initializeBigQueryClient(ctx, config)
+	if err != nil {
+		initError = fmt.Errorf("failed to initialize BigQuery client: %v", err)
+		return
+	}
+
+	// Set up BigQuery inserter
+	dataset := bqClient.Dataset(config.DatasetID)
+	table := dataset.Table(config.TableID)
+	bqInserter = table.Inserter()
+
+	log.Println("BigQuery inserter initialized successfully")
+}
+
+// processMessage unmarshals a message and inserts it into BigQuery
 // It returns an error if unmarshaling or insertion fails
-func processMessage(ctx context.Context, msg *pubsub.Message, inserter *bigquery.Inserter) error {
+func processMessage(ctx context.Context, messageData []byte, inserter *bigquery.Inserter) error {
 	var data BigQueryRow
-	if err := json.Unmarshal(msg.Data, &data); err != nil {
+	if err := json.Unmarshal(messageData, &data); err != nil {
 		return fmt.Errorf("failed to unmarshal message: %w", err)
 	}
 
@@ -30,22 +64,4 @@ func processMessage(ctx context.Context, msg *pubsub.Message, inserter *bigquery
 
 	log.Printf("Successfully inserted data into BigQuery")
 	return nil
-}
-
-// worker continuously processes messages from the jobs channel
-// It acknowledges successful messages and negative-acknowledges failed ones
-func worker(ctx context.Context, jobs <-chan *pubsub.Message, inserter *bigquery.Inserter) error {
-	for {
-		select {
-		case msg := <-jobs:
-			if err := processMessage(ctx, msg, inserter); err != nil {
-				log.Printf("Failed to process message: %v", err)
-				msg.Nack()
-			} else {
-				msg.Ack()
-			}
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
 }
