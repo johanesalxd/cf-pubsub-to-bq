@@ -1,42 +1,19 @@
-package subscribepubsub
+package PubSubToBQ
 
 import (
 	"context"
 	"fmt"
 	"log"
 
-	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
 	"github.com/cloudevents/sdk-go/v2/event"
 )
 
-// init initializes the Cloud Function and BigQuery client.
-// It registers the SubscribePubSub function as a CloudEvent handler
-// and initializes the BigQuery client using a sync.Once to ensure
-// it's only done once.
-func init() {
-	// Set up basic logging configuration
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-
-	functions.CloudEvent("SubscribePubSub", SubscribePubSub)
-	initOnce.Do(initializeBigQuery)
-}
-
-// MessagePublishedData represents the structure of the published message data.
-type MessagePublishedData struct {
-	Message PubSubMessage
-}
-
-// PubSubMessage represents the structure of a Pub/Sub message.
-type PubSubMessage struct {
-	Data []byte `json:"data"`
-}
-
-// SubscribePubSub is the main Cloud Function that handles incoming Pub/Sub messages.
+// PubSubToBQ is the main Cloud Function that handles incoming Pub/Sub messages.
 // It processes the CloudEvent, extracts the Pub/Sub message, and inserts it into BigQuery.
 // ctx: The context for the function invocation.
 // e: The CloudEvent containing the Pub/Sub message.
 // Returns an error if any step in the process fails.
-func SubscribePubSub(ctx context.Context, e event.Event) error {
+func PubSubToBQ(ctx context.Context, e event.Event) error {
 	if initError != nil {
 		log.Printf("Initialization error: %v", initError)
 		return fmt.Errorf("initialization error: %w", initError)
@@ -59,17 +36,5 @@ func SubscribePubSub(ctx context.Context, e event.Event) error {
 	}
 
 	log.Println("Message processed successfully")
-	return nil
-}
-
-// validateMessage validates the Pub/Sub message data.
-// It checks if the message data is empty and returns an error if true.
-// msg: The MessagePublishedData containing the Pub/Sub message.
-// Returns an error if the message is invalid.
-func validateMessage(msg MessagePublishedData) error {
-	if len(msg.Message.Data) == 0 {
-		return fmt.Errorf("empty message data")
-	}
-	// Add more validation as needed
 	return nil
 }

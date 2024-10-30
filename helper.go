@@ -1,4 +1,4 @@
-package subscribepubsub
+package PubSubToBQ
 
 import (
 	"context"
@@ -10,44 +10,22 @@ import (
 	"cloud.google.com/go/bigquery"
 )
 
-type BigQueryRow struct {
-	// Define your BigQuery table schema here
-	ID   string `bigquery:"id"`
-	Name string `bigquery:"name"`
-}
-
 var (
 	bqInserter *bigquery.Inserter
 	initOnce   sync.Once
 	initError  error
 )
 
-// initializeBigQuery initializes the BigQuery client and inserter.
-// It loads the configuration, creates a BigQuery client, and sets up the inserter.
-// This function is called once using sync.Once to ensure single initialization.
-func initializeBigQuery() {
-	ctx := context.Background()
-
-	// Load configuration
-	config, err := loadConfig()
-	if err != nil {
-		initError = fmt.Errorf("failed to load config: %v", err)
-		return
+// validateMessage validates the Pub/Sub message data.
+// It checks if the message data is empty and returns an error if true.
+// msg: The MessagePublishedData containing the Pub/Sub message.
+// Returns an error if the message is invalid.
+func validateMessage(msg MessagePublishedData) error {
+	if len(msg.Message.Data) == 0 {
+		return fmt.Errorf("empty message data")
 	}
-
-	// Initialize BigQuery client
-	bqClient, err := initializeBigQueryClient(ctx, config)
-	if err != nil {
-		initError = fmt.Errorf("failed to initialize BigQuery client: %v", err)
-		return
-	}
-
-	// Set up BigQuery inserter
-	dataset := bqClient.Dataset(config.DatasetID)
-	table := dataset.Table(config.TableID)
-	bqInserter = table.Inserter()
-
-	log.Println("BigQuery inserter initialized successfully")
+	// Add more validation as needed
+	return nil
 }
 
 // processMessage unmarshals a message and inserts it into BigQuery

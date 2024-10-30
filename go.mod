@@ -1,6 +1,6 @@
 module github.com/johanesalxd/cf-pubsub-to-bq
 
-go 1.22.6
+go 1.23
 
 require (
 	cloud.google.com/go/bigquery v1.62.0

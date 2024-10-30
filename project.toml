@@ -4,4 +4,4 @@ value = "event"
 
 [[build.env]]
 name = "GOOGLE_FUNCTION_TARGET"
-value = "SubscribePubSub"
+value = "PubSubToBQ"
