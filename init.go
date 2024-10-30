@@ -5,9 +5,16 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 
 	"cloud.google.com/go/bigquery"
 	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
+)
+
+var (
+	bqInserter *bigquery.Inserter
+	initOnce   sync.Once
+	initError  error
 )
 
 type Config struct {
@@ -20,7 +27,7 @@ type Config struct {
 // from environment variables.
 func defaultConfig() *Config {
 	return &Config{
-		ProjectID: os.Getenv("GOOGLE_CLOUD_PROJECT"),
+		ProjectID: os.Getenv("PROJECT_ID"),
 		DatasetID: os.Getenv("DATASET_ID"),
 		TableID:   os.Getenv("TABLE_ID"),
 	}
@@ -32,7 +39,7 @@ func loadConfig() (*Config, error) {
 	config := defaultConfig()
 
 	if config.ProjectID == "" {
-		return nil, fmt.Errorf("GOOGLE_CLOUD_PROJECT environment variable is not set")
+		return nil, fmt.Errorf("PROJECT_ID environment variable is not set")
 	}
 
 	if config.DatasetID == "" {
