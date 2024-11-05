@@ -6,8 +6,31 @@ Details TBA
 ## Run locally
 TBA
 
-## Test locally
-TBA
+# How to test
+## Input model and example
+* You can use the included *data generator* or build yourself from [here](https://github.com/vincentrussell/json-data-generator/tree/json-data-generator-1.16)
+```
+# source.json
+{
+    "event_type": "{{uuid()}}",
+    "timestamp": "{{date("yyyy-MM-dd'T'HH:mm:ss'Z'")}}",
+    "player_id": "{{alphaNumeric(10)}}",
+    "game_version": "{{random("2.0","2.5","3.0")}}",
+    "device_id": "{{random("android","ios")}}",
+    "location": "{{country()}}"
+}
+```
+```
+# java -jar data-generator/json-data-generator-1.16-standalone.jar -s source.json
+{
+    "event_type": "9ddde82e-c578-4ac2-9ddb-17f063659d88",
+    "timestamp": "2024-11-05T00:26:26Z",
+    "player_id": "uKb33JHT7m",
+    "game_version": "2.0",
+    "device_id": "ios",
+    "location": "Argentina"
+}
+```
 
 ## Run on Cloud Function
 Notes: update `trigger-topic` and `.env.yaml` accordingly
