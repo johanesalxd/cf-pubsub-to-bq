@@ -1,0 +1,8 @@
+{
+    "event_type": "{{random("login","logout","game_search","game_match","game_join","game_disconnect","game_reconnect")}}",
+    "timestamp": "{{date("yyyy-MM-dd'T'HH:mm:ss'Z'")}}",
+    "player_id": "{{alphaNumeric(10)}}",
+    "game_version": "{{random("2.0","2.5","3.0")}}",
+    "device_id": "{{random("android","ios")}}",
+    "location": "{{country()}}"
+}
