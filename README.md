@@ -56,6 +56,17 @@ CREATE OR REPLACE TABLE
 PARTITION BY
   DATE(timestamp);
 ```
+```
+SELECT
+  DATE(timestamp) AS pt,
+  event_type,
+  COUNT(1) AS cnt
+FROM
+  demo_dataset.pubsub_test
+GROUP BY
+  1,
+  2;
+```
 
 ## Run on Cloud Function
 Notes: update `trigger-topic` and `.env.yaml` accordingly
@@ -71,12 +82,11 @@ gcloud functions deploy cf-pubsub-to-bq \
     --env-vars-file=.env.yaml
 ```
 
-## Run on Cloud Run
-TBA
-
 # Additional notes
 TBA
 
 ## Related links
-* https://cloud.google.com/functions/docs/tutorials/pubsub#objectives
+* https://cloud.google.com/functions/docs/tutorials/pubsub
 * https://cloud.google.com/functions/docs/local-development
+* https://cloud.google.com/dataflow/docs/guides/templates/provided/streaming-data-generator
+* 
