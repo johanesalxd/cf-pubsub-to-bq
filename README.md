@@ -12,7 +12,7 @@ TBA
 ```
 # source.json
 {
-    "event_type": "{{uuid()}}",
+    "event_type": "{{random("login","logout","game_search","game_match","game_join","game_disconnect","game_reconnect")}}",
     "timestamp": "{{date("yyyy-MM-dd'T'HH:mm:ss'Z'")}}",
     "player_id": "{{alphaNumeric(10)}}",
     "game_version": "{{random("2.0","2.5","3.0")}}",
@@ -30,6 +30,19 @@ TBA
     "device_id": "ios",
     "location": "Argentina"
 }
+```
+## BigQuery model and example
+Notes: update `YOUR_DATASET_NAME` and `YOUR_TABLE_NAME` accordingly
+```
+CREATE OR REPLACE TABLE
+  YOUR_DATASET_NAME.YOUR_TABLE_NAME ( event_type string,
+    timestamp timestamp,
+    player_id string,
+    game_version string,
+    device_id string,
+    location string )
+PARTITION BY
+  DATE(timestamp);
 ```
 
 ## Run on Cloud Function

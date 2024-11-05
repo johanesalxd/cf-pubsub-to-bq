@@ -13,10 +13,10 @@ type PubSubMessage struct {
 // BigQueryRow represents a row in the BigQuery table.
 type BigQueryRow struct {
 	// Define your BigQuery table schema here
-	EventType   string `bigquery:"event_type"`
-	Timestamp   string `bigquery:"timestamp"`
-	PlayerID    string `bigquery:"player_id"`
-	GameVersion string `bigquery:"game_version"`
-	DeviceID    string `bigquery:"device_id"`
-	Location    string `bigquery:"location"`
+	EventType   string `bigquery:"event_type" json:"event_type"`
+	Timestamp   string `bigquery:"timestamp" json:"timestamp"`
+	PlayerID    string `bigquery:"player_id" json:"player_id"`
+	GameVersion string `bigquery:"game_version" json:"game_version"`
+	DeviceID    string `bigquery:"device_id" json:"device_id"`
+	Location    string `bigquery:"location" json:"location"`
 }
