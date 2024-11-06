@@ -10,7 +10,7 @@ TBA
 ## Input model and example
 * You can use the included *data generator* or build yourself from [here](https://github.com/vincentrussell/json-data-generator/tree/json-data-generator-1.16)
 ```
-# java -jar data-generator/json-data-generator-1.16-standalone.jar -s data-generator/source.json
+java -jar data-generator/json-data-generator-1.16-standalone.jar -s data-generator/source.json
 {
     "event_type": "game_match",
     "timestamp": "2024-11-05T11:12:50Z",
@@ -46,7 +46,8 @@ topic=projects/YOUR_PROJECT_ID/topics/PubSubToBQ
 ## BigQuery model and example
 Notes: update `YOUR_DATASET_NAME` and `YOUR_TABLE_NAME` accordingly
 ```
-CREATE OR REPLACE TABLE
+bq query --nouse_legacy_sql \
+'CREATE OR REPLACE TABLE
   YOUR_DATASET_NAME.YOUR_TABLE_NAME ( event_type string,
     timestamp timestamp,
     player_id string,
@@ -54,18 +55,19 @@ CREATE OR REPLACE TABLE
     device_id string,
     location string )
 PARTITION BY
-  DATE(timestamp);
+  DATE(timestamp);'
 ```
 ```
-SELECT
+bq query --nouse_legacy_sql \
+'SELECT
   DATE(timestamp) AS pt,
   event_type,
   COUNT(1) AS cnt
 FROM
-  demo_dataset.pubsub_test
+  YOUR_DATASET_NAME.YOUR_TABLE_NAME
 GROUP BY
   1,
-  2;
+  2;'
 ```
 
 ## Run on Cloud Function
