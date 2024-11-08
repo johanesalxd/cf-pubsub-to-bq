@@ -23,19 +23,20 @@ TBA
 # How to run
 ## Data Generator setup
 * Using Dataflow data generator from [here](https://cloud.google.com/dataflow/docs/guides/templates/provided/streaming-data-generator)
-  * Update `TOPIC_NAME`, `PROJECT_ID`, `REGION_NAME`, `SCHEMA_LOCATION` and `QPS` as per requirements
+  * Update `TOPIC_NAME`, `PROJECT_ID`, `REGION_NAME`, `SCHEMA_BUCKET_LOCATION` and `QPS` as per requirements
 
-### Pub/Sub
+### Create Pub/Sub Topic and Subscription
 ```
 gcloud pubsub topics create TOPIC_NAME
 ```
 ```
-gcloud pubsub topics create PubSubToBQ
+gcloud pubsub subscriptions create TOPIC_NAME-sub --topic=TOPIC_NAME
 ```
 
-### Dataflow
+### Data Generator deployment
+* It may take couple of minutes to complete. You can check in the [Dataflow console](https://console.cloud.google.com/dataflow/) for the latest status 
 ```
-gcloud storage cp data-generator/source.json gs://mybucket
+gcloud storage cp data-generator/source.json gs://SCHEMA_BUCKET_LOCATION
 ```
 ```
 gcloud dataflow flex-template run data-generator-pubsub-to-bq \
@@ -43,10 +44,11 @@ gcloud dataflow flex-template run data-generator-pubsub-to-bq \
     --region=REGION_NAME \
     --template-file-gcs-location=gs://dataflow-templates-REGION_NAME/latest/flex/Streaming_Data_Generator \
     --parameters \
-schemaLocation=SCHEMA_LOCATION,\
+schemaLocation=gs://SCHEMA_BUCKET_LOCATION,\
 qps=QPS,\
 topic=projects/PROJECT_ID/topics/TOPIC_NAME
 ```
+For example:
 ```
 gcloud dataflow flex-template run data-generator-pubsub-to-bq \
     --project=PROJECT_ID \
@@ -58,7 +60,15 @@ qps=1,\
 topic=projects/PROJECT_ID/topics/TOPIC_NAME
 ```
 
-## BigQuery model and example
+### Checkpoint
+* Update `TOPIC_NAME` as per requirements
+* Check if the generated messages from the previous steps has been delivered successfully to Pub/Sub Topic
+```
+gcloud pubsub subscriptions pull TOPIC_NAME-sub --no-auto-ack --format=json
+```
+
+## Data ingestion setup
+### Create BigQuery table
 * Update `DATASET_NAME` and `TABLE_NAME` accordingly
 * Table structure is aligned with `model.go`
 ```
@@ -73,6 +83,23 @@ bq query --nouse_legacy_sql \
 PARTITION BY
   DATE(timestamp);'
 ```
+
+### Cloud Run functions deployment
+* Update `TOPIC_NAME` and `.env.yaml` accordingly 
+```
+gcloud functions deploy cf-pubsub-to-bq \
+    --gen2 \
+    --runtime=go122 \
+    --region=us-central1 \
+    --source=. \
+    --entry-point=PubSubToBQ \
+    --trigger-topic=TOPIC_NAME \
+    --allow-unauthenticated \
+    --env-vars-file=.env.yaml
+```
+
+### Checkpoint
+* Update `DATASET_NAME` and `TABLE_NAME` accordingly
 ```
 bq query --nouse_legacy_sql \
 'SELECT
@@ -84,21 +111,6 @@ FROM
 GROUP BY
   1,
   2;'
-```
-
-## Run on Cloud Function
-* Update `FUNCTION_NAME` and `TOPIC_NAME` as per requirements
-* Update `.env.yaml` accordingly 
-```
-gcloud functions deploy FUNCTION_NAME \
-    --gen2 \
-    --runtime=go122 \
-    --region=us-central1 \
-    --source=. \
-    --entry-point=PubSubToBQ \
-    --trigger-topic=TOPIC_NAME \
-    --allow-unauthenticated \
-    --env-vars-file=.env.yaml
 ```
 
 # Additional notes
