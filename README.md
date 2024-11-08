@@ -23,7 +23,7 @@ TBA
 # How to run
 ## Data Generator setup
 * Using Dataflow data generator from [here](https://cloud.google.com/dataflow/docs/guides/templates/provided/streaming-data-generator)
-  * Update `TOPIC_NAME`, `YOUR_PROJECT_ID`, `REGION_NAME`, `SCHEMA_LOCATION` and `QPS` as per requirements
+  * Update `TOPIC_NAME`, `PROJECT_ID`, `REGION_NAME`, `SCHEMA_LOCATION` and `QPS` as per requirements
 
 ### Pub/Sub
 ```
@@ -39,32 +39,32 @@ gcloud storage cp data-generator/source.json gs://mybucket
 ```
 ```
 gcloud dataflow flex-template run data-generator-pubsub-to-bq \
-    --project=YOUR_PROJECT_ID \
+    --project=PROJECT_ID \
     --region=REGION_NAME \
     --template-file-gcs-location=gs://dataflow-templates-REGION_NAME/latest/flex/Streaming_Data_Generator \
     --parameters \
 schemaLocation=SCHEMA_LOCATION,\
 qps=QPS,\
-topic=projects/YOUR_PROJECT_ID/topics/PubSubToBQ
+topic=projects/PROJECT_ID/topics/TOPIC_NAME
 ```
 ```
 gcloud dataflow flex-template run data-generator-pubsub-to-bq \
-    --project=YOUR_PROJECT_ID \
+    --project=PROJECT_ID \
     --region=us-central1 \
     --template-file-gcs-location=gs://dataflow-templates-us-central1/latest/flex/Streaming_Data_Generator \
     --parameters \
 schemaLocation=gs://mybucket/source.json,\
 qps=1,\
-topic=projects/YOUR_PROJECT_ID/topics/PubSubToBQ
+topic=projects/PROJECT_ID/topics/TOPIC_NAME
 ```
 
 ## BigQuery model and example
-* Update `YOUR_DATASET_NAME` and `YOUR_TABLE_NAME` accordingly
+* Update `DATASET_NAME` and `TABLE_NAME` accordingly
 * Table structure is aligned with `model.go`
 ```
 bq query --nouse_legacy_sql \
 'CREATE OR REPLACE TABLE
-  YOUR_DATASET_NAME.YOUR_TABLE_NAME ( event_type string,
+  DATASET_NAME.TABLE_NAME ( event_type string,
     timestamp timestamp,
     player_id string,
     game_version string,
@@ -80,22 +80,23 @@ bq query --nouse_legacy_sql \
   event_type,
   COUNT(1) AS cnt
 FROM
-  YOUR_DATASET_NAME.YOUR_TABLE_NAME
+  DATASET_NAME.TABLE_NAME
 GROUP BY
   1,
   2;'
 ```
 
 ## Run on Cloud Function
-Notes: update `trigger-topic` and `.env.yaml` accordingly
+* Update `FUNCTION_NAME` and `TOPIC_NAME` as per requirements
+* Update `.env.yaml` accordingly 
 ```
-gcloud functions deploy cf-pubsub-to-bq \
+gcloud functions deploy FUNCTION_NAME \
     --gen2 \
     --runtime=go122 \
     --region=us-central1 \
     --source=. \
     --entry-point=PubSubToBQ \
-    --trigger-topic=PubSubToBQ \
+    --trigger-topic=TOPIC_NAME \
     --allow-unauthenticated \
     --env-vars-file=.env.yaml
 ```
